@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1b6fd8">
+<title>Potty Tycoon</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚽</text></svg>">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#0f2a4a;font-family:"Trebuchet MS",system-ui,-apple-system,sans-serif;color:#1d2433;overflow:hidden;user-select:none;-webkit-user-select:none}
+#app{max-width:520px;margin:0 auto;height:100%;display:flex;flex-direction:column;background:#eaf3ff;position:relative}
+#hud{display:flex;align-items:center;gap:8px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));background:linear-gradient(#1b6fd8,#1557ad);color:#fff;box-shadow:0 2px 6px #0004;z-index:2}
+#cash{font-size:24px;font-weight:900;text-shadow:0 2px 0 #0a3a7a;letter-spacing:.5px}
+#rate{font-size:12px;opacity:.9}
+#hud .sp{flex:1}
+.ib{background:#ffffff26;border:0;color:#fff;font-size:18px;width:38px;height:38px;border-radius:10px;cursor:pointer}
+#boostbar{display:flex;gap:6px;padding:6px 10px;background:#d6e7ff;align-items:center;font-size:12px}
+#boostbtn{flex:1;border:0;border-radius:10px;padding:8px;font-weight:800;font-size:13px;color:#fff;background:linear-gradient(#ff9d2e,#f07800);box-shadow:0 3px 0 #b85a00;cursor:pointer}
+#boostbtn:disabled{background:#9fb0c8;box-shadow:0 3px 0 #7a8aa3}
+#plg{font-weight:800;color:#a67c00;white-space:nowrap}
+#mapwrap{position:relative;flex:0 0 auto}
+canvas{display:block;width:100%;touch-action:manipulation}
+#banner{position:absolute;left:8px;right:8px;top:8px;background:#fff;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:700;box-shadow:0 3px 10px #0003;display:none;align-items:center;gap:8px}
+#banner button{margin-left:auto}
+#tabs{display:flex;background:#1d2433}
+#tabs button{flex:1;border:0;background:none;color:#9fb3cf;padding:9px 0;font-size:12px;font-weight:800;cursor:pointer;border-bottom:3px solid transparent}
+#tabs button.on{color:#fff;border-bottom-color:#ffb020}
+#panel{flex:1;overflow-y:auto;padding:8px 8px 20px;-webkit-overflow-scrolling:touch}
+.card{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:9px 10px;margin-bottom:7px;box-shadow:0 2px 0 #c7d6ea}
+.card .ic{font-size:28px;width:38px;text-align:center}
+.card .tx{flex:1;min-width:0}
+.card .t{font-weight:800;font-size:14px}
+.card .d{font-size:12px;color:#5a6780;margin-top:2px}
+.buy{border:0;border-radius:10px;min-width:84px;padding:9px 8px;font-weight:900;font-size:13px;color:#fff;background:linear-gradient(#35c25a,#1f9a40);box-shadow:0 3px 0 #13702c;cursor:pointer}
+.buy:active{transform:translateY(2px);box-shadow:0 1px 0 #13702c}
+.buy:disabled{background:#b9c4d4;box-shadow:0 3px 0 #96a3b6;color:#eef}
+.buy.max{background:#8a6cf0;box-shadow:0 3px 0 #5b43b5}
+.modal{position:absolute;inset:0;background:#0b1a33cc;display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+.box{background:#fff;border-radius:20px;padding:20px;max-width:360px;width:100%;text-align:center;box-shadow:0 10px 30px #0006;animation:pop .25s}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.box h2{margin:4px 0 8px;font-size:22px}
+.box p{margin:6px 0;color:#435069;font-size:14px}
+.big{display:block;width:100%;border:0;border-radius:14px;padding:13px;font-weight:900;font-size:17px;color:#fff;background:linear-gradient(#35c25a,#1f9a40);box-shadow:0 4px 0 #13702c;margin-top:10px;cursor:pointer}
+.big.alt{background:linear-gradient(#7d8ca6,#5b6a84);box-shadow:0 4px 0 #3c4860}
+.big.red{background:linear-gradient(#ff5a5a,#d42c2c);box-shadow:0 4px 0 #8f1b1b}
+.big:active{transform:translateY(2px)}
+#title{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#4fa3ff,#1557ad 60%,#0b2f63);color:#fff;text-align:center;padding:24px}
+#title .logo{font-size:54px;font-weight:900;line-height:.95;letter-spacing:2px;text-shadow:0 5px 0 #0a3a7a,0 8px 18px #0008;transform:rotate(-4deg)}
+#title .logo span{color:#ffd23f}
+#title .em{font-size:84px;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-10px) rotate(4deg)}}
+#title .tag{margin:14px 0 26px;font-size:16px;opacity:.9}
+#title .big{max-width:260px;font-size:22px}
+.mini{font-size:56px;font-weight:900;margin:6px 0}
+.tbar{height:10px;background:#e3e9f3;border-radius:6px;overflow:hidden;margin:8px 0}
+.tbar i{display:block;height:100%;background:linear-gradient(90deg,#ff9d2e,#ff4d4d);width:100%}
+#toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#1d2433;color:#fff;padding:9px 14px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:25;white-space:nowrap}
+.sec{font-size:11px;font-weight:900;color:#6c7a93;margin:8px 4px 5px;letter-spacing:1px}
+</style></head>
+<body><div id="app">
+<div id="hud"><div><div id="cash">$0</div><div id="rate">$0/s</div></div><div class="sp"></div>
+<button class="ib" id="sndbtn" title="Sound">🔊</button><button class="ib" id="setbtn" title="Settings">⚙️</button></div>
+<div id="boostbar"><button id="boostbtn">📺 Watch ad: 2x cash 60s <small>(Demo boost)</small></button><span id="plg"></span></div>
+<div id="mapwrap"><canvas id="cv"></canvas><div id="banner"></div></div>
+<div id="tabs"><button data-t="units" class="on">🚽 Units</button><button data-t="trucks">🚛 Trucks</button><button data-t="crew">🧑‍🔧 Crew</button><button data-t="yard">🏗️ Yard</button><button data-t="prestige">🪠 Sell</button></div>
+<div id="panel"></div>
+<div id="toast"></div>
+<div class="modal" id="modal"><div class="box" id="mbox"></div></div>
+<div id="title"><div class="em">🚽</div><div class="logo">POTTY<br><span>TYCOON</span></div><div class="tag">Build the #1 porta-potty empire in the county.<br>It's a dirty job. Somebody's gotta get rich doing it.</div><button class="big" id="playbtn">▶ PLAY</button></div>
+</div>
+<script>
+"use strict";
+// ---------- helpers ----------
+const $=s=>document.querySelector(s);
+const SUF=["","K","M","B","T","Qa","Qi","Sx","Sp","Oc"];
+function fmt(n){if(n<1000)return (n<10&&n%1?n.toFixed(1):Math.floor(n)).toString();let i=0;while(n>=1000&&i<SUF.length-1){n/=1000;i++}return (n<10?n.toFixed(2):n<100?n.toFixed(1):Math.floor(n))+SUF[i]}
+const money=n=>"$"+fmt(n);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function fmtTime(s){s=Math.floor(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}h ${m}m`:m?`${m}m ${x}s`:`${x}s`}
+
+// ---------- data ----------
+const W=400,H=400;
+const YARD={x:62,y:338};
+const SITES=[
+ {id:"party",name:"Backyard Party",em:"🎉",x:300,y:330,cost:0,units:2,rent:1,fee:5,fill:22,col:"#9be37a"},
+ {id:"remodel",name:"Home Remodel",em:"🏠",x:318,y:196,cost:120,units:3,rent:2.5,fee:12,fill:26,col:"#c9e6a5"},
+ {id:"constr",name:"Construction Site",em:"🏗️",x:100,y:168,cost:900,units:4,rent:7,fee:35,fill:30,col:"#e8d3a6"},
+ {id:"fair",name:"County Fair",em:"🎡",x:262,y:62,cost:6000,units:30,rent:30,fee:120,fill:16,col:"#ffd6e8"}
+];
+const STAGES=[{n:"Foundation",u:4,need:0},{n:"Framing",u:7,need:25},{n:"Building",u:10,need:80}];
+const TIERS=[{n:"Basic",m:1,c:0,em:"🚽"},{n:"Deluxe",m:2.5,c:250,em:"🧼"},{n:"ADA Accessible",m:6,c:4000,em:"♿"},{n:"Luxury Trailer",m:16,c:60000,em:"✨"}];
+const FAIR_LEN=120,FAIR_CD=150;
+
+let S; // state
+function fresh(){return{cash:0,total:0,plungers:0,tier:0,tank:0,speed:0,wash:0,dump:0,cap:0,trucks:1,
+ sites:SITES.map(s=>({id:s.id,open:s.id==="party",mgr:false,units:Array.from({length:s.units},()=>Math.random()*.3),done:0,stage:0,angryT:0})),
+ fairUntil:0,fairReady:0,boostUntil:0,boostCD:0,sound:true,last:Date.now(),started:false,sold:0}}
+
+function load(){try{const d=JSON.parse(localStorage.getItem("pottyTycoon_v1"));if(d&&d.sites){const f=fresh();S=Object.assign(f,d);return true}}catch(e){}S=fresh();return false}
+function save(){S.last=Date.now();try{localStorage.setItem("pottyTycoon_v1",JSON.stringify(S))}catch(e){}}
+
+// ---------- derived ----------
+const site=id=>S.sites.find(s=>s.id===id);
+const def=id=>SITES.find(s=>s.id===id);
+const now=()=>Date.now();
+function mult(){return TIERS[S.tier].m*(1+S.plungers*0.1)*(now()<S.boostUntil?2:1)}
+const tankSize=()=>3+S.tank*2;
+const truckSpeed=()=>70*(1+S.speed*0.18);
+const serviceTime=()=>0.9/(1+S.wash*0.35);
+const dumpTime=()=>2.5/(1+S.dump*0.4);
+const maxTrucks=()=>2+S.cap;
+let heatUntil=0;
+const stinkMul=()=>now()<heatUntil?2:1;
+function fairActive(){return now()<S.fairUntil}
+function siteActive(s){return s.open&&(s.id!=="fair"||fairActive())}
+function unitCount(s){return s.id==="constr"?STAGES[s.stage].u:def(s.id).units}
+
+// ---------- costs ----------
+const C={
+ tank:()=>Math.floor(60*Math.pow(1.85,S.tank)),
+ speed:()=>Math.floor(45*Math.pow(1.75,S.speed)),
+ truck:()=>Math.floor(300*Math.pow(3.2,S.trucks-1)),
+ wash:()=>Math.floor(400*Math.pow(2.1,S.wash)),
+ dump:()=>Math.floor(350*Math.pow(2.0,S.dump)),
+ cap:()=>Math.floor(1500*Math.pow(4,S.cap)),
+ mgr:id=>({party:25,remodel:400,constr:3000,fair:25000})[id],
+ tier:()=>TIERS[S.tier+1]?TIERS[S.tier+1].c:Infinity
+};
+function spend(c){if(S.cash>=c){S.cash-=c;return true}return false}
+
+// ---------- audio ----------
+let AC=null;
+function tone(f,d=.08,type="square",vol=.06,slide=0){if(!S.sound)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),AC.currentTime+d);g.gain.value=vol;g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+const sfx={
+ coin:()=>{tone(988,.06,"square",.04);setTimeout(()=>tone(1319,.1,"square",.04),55)},
+ buy:()=>{tone(523,.07);setTimeout(()=>tone(659,.07),60);setTimeout(()=>tone(784,.12),120)},
+ flush:()=>tone(600,.35,"sawtooth",.04,-480),
+ bad:()=>tone(180,.25,"sawtooth",.05,-80),
+ tap:()=>tone(700,.04,"triangle",.06),
+ horn:()=>{tone(392,.12,"square",.05);setTimeout(()=>tone(392,.18,"square",.05),150)},
+ fanfare:()=>[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.15,"triangle",.07),i*110))
+};
+
+// ---------- trucks (runtime) ----------
+let trucks=[];
+function syncTrucks(){while(trucks.length<S.trucks)trucks.push({x:YARD.x,y:YARD.y,st:"idle",path:[],target:null,load:0,t:0,dir:1,hue:trucks.length});}
+function pathTo(s){const d=def(s.id);return[{x:YARD.x,y:YARD.y},{x:YARD.x,y:d.y+22},{x:d.x,y:d.y+22}]}
+function dispatch(tr,s){tr.target=s.id;tr.st="go";tr.path=pathTo(s).slice(1);}
+function goHome(tr){const d=def(tr.target);tr.st="home";tr.path=[{x:YARD.x,y:d.y+22},{x:YARD.x,y:YARD.y}];}
+function enRoute(id){return trucks.some(t=>t.target===id&&(t.st==="go"||t.st==="svc"))}
+function dirtiest(s){let b=-1,v=.12;s.units.forEach((u,i)=>{if(u>v){v=u;b=i}});return b}
+
+// ---------- floats & particles ----------
+let floats=[],parts=[];
+function float(x,y,txt,col="#1f9a40"){floats.push({x,y,txt,col,t:0})}
+
+// ---------- earn ----------
+let earnLog=[];
+function earn(n,x,y){S.cash+=n;S.total+=n;earnLog.push([now(),n]);if(x!=null)float(x,y,"+"+money(n))}
+
+function serviceUnit(s,i,x,y,manual){const d=def(s.id);const full=s.units[i]>=1;let pay=d.fee*mult()*(full?.5:1)*(manual?.6:1);if(s.id==="fair")pay*=1;s.units[i]=0;s.done++;earn(pay,x,y-10);sfx.coin();
+ if(s.id==="constr"){const ns=STAGES[s.stage+1];if(ns&&s.done>=ns.need){s.stage++;while(s.units.length<ns.u)s.units.push(0);toast(`🏗️ Construction reached ${ns.n}! Now ${ns.u} units.`);sfx.fanfare();}}}
+
+// ---------- update ----------
+let last=performance.now(),acc=0,uiT=0,saveT=0,evT=rnd(70,110);
+function update(dt){
+ const sm=stinkMul();
+ for(const s of S.sites){if(!siteActive(s))continue;const d=def(s.id);let anyFull=false;
+  for(let i=0;i<s.units.length;i++){s.units[i]=Math.min(1,s.units[i]+dt/d.fill*sm);if(s.units[i]<1){S.cash+=d.rent*mult()*dt;S.total+=d.rent*mult()*dt;earnLog.push([now(),d.rent*mult()*dt])}else{anyFull=true;S.cash+=d.rent*mult()*dt*.15;}}
+  s.angry=anyFull;}
+ // manager auto-dispatch
+ for(const tr of trucks){if(tr.st!=="idle")continue;let best=null,bv=0;
+  for(const s of S.sites){if(!s.mgr||!siteActive(s)||enRoute(s.id))continue;const v=s.units.reduce((a,u)=>a+(u>.45?u:0),0);if(v>bv){bv=v;best=s}}
+  if(best)dispatch(tr,best);}
+ const sp=truckSpeed();
+ for(const tr of trucks){
+  if(tr.st==="go"||tr.st==="home"){let mv=sp*dt;while(mv>0&&tr.path.length){const p=tr.path[0],dx=p.x-tr.x,dy=p.y-tr.y,L=Math.hypot(dx,dy);if(dx)tr.dir=dx>0?1:-1;if(L<=mv){tr.x=p.x;tr.y=p.y;tr.path.shift();mv-=L}else{tr.x+=dx/L*mv;tr.y+=dy/L*mv;mv=0}}
+   if(!tr.path.length){if(tr.st==="go"){tr.st="svc";tr.t=0}else{tr.st=tr.load>0?"dump":"idle";tr.t=0;tr.target=null}}}
+  else if(tr.st==="svc"){const s=site(tr.target);if(!siteActive(s)){goHome(tr);continue}tr.t+=dt;if(tr.t>=serviceTime()){tr.t=0;const i=dirtiest(s);if(i<0||tr.load>=tankSize()){goHome(tr)}else{const p=unitPos(s,i);serviceUnit(s,i,p.x,p.y);tr.load++;sparkle(p.x,p.y);if(tr.load>=tankSize())goHome(tr)}}}
+  else if(tr.st==="dump"){tr.t+=dt;if(tr.t>=dumpTime()){tr.load=0;tr.st="idle";tr.t=0;sfx.flush()}}
+ }
+ for(const f of floats)f.t+=dt;floats=floats.filter(f=>f.t<1.2);
+ for(const p of parts){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt}parts=parts.filter(p=>p.t<.6);
+ // events
+ evT-=dt;if(evT<=0&&!modalOpen&&S.sites.filter(s=>s.open).length>=1&&S.total>60){evT=rnd(100,170);randomEvent()}
+}
+function sparkle(x,y){for(let i=0;i<7;i++)parts.push({x,y,vx:rnd(-50,50),vy:rnd(-70,-10),t:0,c:["#7fd3ff","#fff","#b0f0ff"][i%3]})}
+
+// ---------- layout of units ----------
+function unitPos(s,i){const d=def(s.id);const n=s.units.length;
+ if(s.id==="fair"){const cols=10,r=Math.floor(i/cols),c=i%cols;return{x:d.x-72+c*16,y:d.y-14+r*17}}
+ const cols=Math.min(n,5),r=Math.floor(i/cols),c=i%cols;const rowN=Math.min(cols,n-r*cols);return{x:d.x+(s.id==="constr"?12:0)-(rowN-1)*11+c*22,y:d.y-8+r*24-(n>5?4:0)}}
+
+// ---------- render ----------
+const cv=$("#cv"),ctx=cv.getContext("2d");let scale=1,DPR=1;
+function resize(){const w=cv.parentElement.clientWidth;const h=Math.min(w*0.95,window.innerHeight*0.5);cv.style.height=h+"px";DPR=window.devicePixelRatio||1;cv.width=w*DPR;cv.height=h*DPR;scale=Math.min(w/W,h/H);}
+let offX=0,offY=0;
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):ctx.rect(x,y,w,h)}
+function draw(t){const w=cv.width/DPR,h=cv.height/DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+ // grass
+ ctx.fillStyle="#7ccf5e";ctx.fillRect(0,0,w,h);
+ offX=(w-W*scale)/2;offY=(h-H*scale)/2;ctx.translate(offX,offY);ctx.scale(scale,scale);
+ ctx.fillStyle="#86d866";for(let i=0;i<40;i++){const gx=(i*97)%W,gy=(i*61)%H;ctx.beginPath();ctx.arc(gx,gy,10,0,7);ctx.fill()}
+ // trees
+ for(const [tx,ty] of [[20,30],[160,40],[370,110],[200,260],[380,380],[30,240],[190,355]]){ctx.fillStyle="#3f9a3a";ctx.beginPath();ctx.arc(tx,ty,13,0,7);ctx.fill();ctx.fillStyle="#58b84c";ctx.beginPath();ctx.arc(tx-3,ty-3,8,0,7);ctx.fill()}
+ // roads
+ ctx.lineCap="round";ctx.lineJoin="round";
+ for(const s of S.sites){const p=pathTo(s);ctx.strokeStyle=s.open?"#5d6470":"#8a9a86";ctx.lineWidth=16;ctx.beginPath();ctx.moveTo(p[0].x,p[0].y);p.slice(1).forEach(q=>ctx.lineTo(q.x,q.y));ctx.stroke();}
+ for(const s of S.sites){if(!s.open)continue;const p=pathTo(s);ctx.strokeStyle="#f3d34a";ctx.lineWidth=1.5;ctx.setLineDash([6,7]);ctx.beginPath();ctx.moveTo(p[0].x,p[0].y);p.slice(1).forEach(q=>ctx.lineTo(q.x,q.y));ctx.stroke();ctx.setLineDash([])}
+ // yard
+ ctx.fillStyle="#c8ccd2";rr(YARD.x-50,YARD.y-34,100,60,8);ctx.fill();ctx.strokeStyle="#8b939e";ctx.lineWidth=2;ctx.stroke();
+ ctx.fillStyle="#2f6fd0";rr(YARD.x-44,YARD.y-30,40,26,4);ctx.fill();ctx.fillStyle="#fff";ctx.font="bold 8px sans-serif";ctx.textAlign="center";ctx.fillText("HQ",YARD.x-24,YARD.y-14);
+ if(S.wash>0){ctx.fillStyle="#7fd3ff";rr(YARD.x+4,YARD.y-30,20,14,3);ctx.fill();ctx.fillStyle="#035";ctx.font="7px sans-serif";ctx.fillText("WASH",YARD.x+14,YARD.y-20)}
+ if(S.dump>0){ctx.fillStyle="#8a6d3b";ctx.beginPath();ctx.arc(YARD.x+38,YARD.y-20,9,0,7);ctx.fill();ctx.font="9px sans-serif";ctx.fillText("💩",YARD.x+38,YARD.y-17)}
+ label("YOUR YARD",YARD.x,YARD.y+38,"#1d2433","#fff");
+ // sites
+ for(const s of S.sites)drawSite(s,t);
+ // trucks
+ trucks.forEach((tr,i)=>drawTruck(tr,i,t));
+ // parts
+ for(const p of parts){ctx.globalAlpha=1-p.t/.6;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,2.2,0,7);ctx.fill()}ctx.globalAlpha=1;
+ // floats
+ ctx.textAlign="center";for(const f of floats){ctx.globalAlpha=1-f.t/1.2;ctx.font="900 13px Trebuchet MS,sans-serif";ctx.lineWidth=3;ctx.strokeStyle="#fff";ctx.strokeText(f.txt,f.x,f.y-f.t*30);ctx.fillStyle=f.col;ctx.fillText(f.txt,f.x,f.y-f.t*30)}ctx.globalAlpha=1;
+ if(now()<heatUntil){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle="rgba(255,120,0,.12)";ctx.fillRect(0,0,w,h)}
+}
+function label(txt,x,y,bg,fg,fs=9){ctx.font=`900 ${fs}px Trebuchet MS,sans-serif`;ctx.textAlign="center";const tw=ctx.measureText(txt).width+10;ctx.fillStyle=bg;rr(x-tw/2,y-fs,tw,fs+5,6);ctx.fill();ctx.fillStyle=fg;ctx.fillText(txt,x,y)}
+function drawSite(s,t){const d=def(s.id);const bw=s.id==="fair"?176:124,bh=s.id==="fair"?84:66;
+ ctx.fillStyle=s.open?d.col:"#a9b5a4";rr(d.x-bw/2,d.y-bh/2-6,bw,bh,10);ctx.fill();ctx.strokeStyle=s.open?"#00000025":"#0002";ctx.lineWidth=2;ctx.stroke();
+ if(!s.open){ctx.font="22px sans-serif";ctx.textAlign="center";ctx.fillText("🔒",d.x,d.y+2);label(d.name,d.x,d.y-bh/2-10,"#465063","#fff");label("Unlock "+money(d.cost),d.x,d.y+24,S.cash>=d.cost?"#1f9a40":"#6b7385","#fff",10);return}
+ // decor
+ ctx.font="16px sans-serif";ctx.textAlign="center";
+ if(s.id==="party"){ctx.fillText("🎈",d.x-48,d.y-14);ctx.fillText("🍔",d.x+48,d.y+18)}
+ if(s.id==="remodel"){ctx.font="24px sans-serif";ctx.fillText("🏠",d.x+44,d.y+22)}
+ if(s.id==="constr")drawBuilding(s,d);
+ if(s.id==="fair"){ctx.font="22px sans-serif";ctx.fillText("🎡",d.x-72,d.y-22);ctx.fillText("🎠",d.x+72,d.y-22);
+  if(!fairActive()){const cd=Math.max(0,S.fairReady-now())/1000;ctx.font="14px sans-serif";label(cd>0?"Next weekend in "+fmtTime(cd):"TAP: Start Fair Weekend!",d.x,d.y+10,cd>0?"#6b7385":"#e0457b","#fff",11);label(d.name+(s.mgr?" 🧑‍🔧":""),d.x,d.y-bh/2-10,"#1d2433","#fff");return}
+  label("⏱ "+fmtTime((S.fairUntil-now())/1000)+" left",d.x,d.y+bh/2-6,"#e0457b","#fff");}
+ s.units.forEach((u,i)=>{const p=unitPos(s,i);drawPotty(p.x,p.y,u,s.id==="fair"?.75:1,t,i)});
+ label(d.name+(s.mgr?" 🧑‍🔧":""),d.x,d.y-bh/2-10,"#1d2433","#fff");
+ if(s.angry){ctx.font="16px sans-serif";ctx.fillText("😡",d.x+bw/2-8,d.y-bh/2+6+Math.sin(t/120)*2)}
+}
+function drawBuilding(s,d){const x=d.x-58,y=d.y-30;ctx.save();
+ if(s.stage===0){ctx.fillStyle="#9aa0a8";ctx.fillRect(x,y+30,18,24)}
+ if(s.stage===1){ctx.strokeStyle="#b07a3c";ctx.lineWidth=2;for(let i=0;i<3;i++){ctx.strokeRect(x,y+8+i*15,18,15)}}
+ if(s.stage===2){ctx.fillStyle="#d85a3b";ctx.fillRect(x,y,18,54);ctx.fillStyle="#bfe7ff";for(let i=0;i<4;i++){ctx.fillRect(x+3,y+4+i*13,5,7);ctx.fillRect(x+10,y+4+i*13,5,7)}}
+ ctx.restore();ctx.font="900 7px sans-serif";ctx.fillStyle="#5a4220";ctx.textAlign="center";ctx.fillText(STAGES[s.stage].n.toUpperCase(),d.x+38,d.y+26)}
+function drawPotty(x,y,u,k,t,i){ctx.save();ctx.translate(x,y);ctx.scale(k,k);
+ const full=u>=1;if(full)ctx.rotate(Math.sin(t/80+i)*.06);
+ const tc=["#2f7be0","#22a39a","#7a52d6","#d4a017"][S.tier];
+ ctx.fillStyle="#0002";ctx.fillRect(-7,9,16,3);
+ ctx.fillStyle=tc;rr(-8,-12,16,22,3);ctx.fill();ctx.fillStyle="#ffffff40";ctx.fillRect(-8,-12,16,4);
+ ctx.fillStyle="#fff";ctx.fillRect(-3,-6,6,1.5);ctx.fillStyle=full?"#e33":"#3c3";ctx.fillRect(3,-1,2,3);
+ // stink bar
+ ctx.fillStyle="#0004";ctx.fillRect(-9,13,18,3);ctx.fillStyle=u<.5?"#3c3":u<.85?"#f5b400":"#e33";ctx.fillRect(-9,13,18*u,3);
+ if(u>.6){ctx.strokeStyle=`rgba(110,160,40,${(u-.5)*1.4})`;ctx.lineWidth=1.3;for(let j=-1;j<=1;j++){ctx.beginPath();const ph=t/250+j;ctx.moveTo(j*5,-14);ctx.quadraticCurveTo(j*5+Math.sin(ph)*4,-19,j*5,-24);ctx.stroke()}}
+ if(full){ctx.font="11px sans-serif";ctx.textAlign="center";ctx.fillText("😡",0,-25)}
+ ctx.restore()}
+function drawTruck(tr,i,t){let x=tr.x,y=tr.y;if(tr.st==="idle"||tr.st==="dump"){x=YARD.x-22+(i%4)*15+15;y=YARD.y+8;}
+ else{x+=((i%3)-1)*4;}
+ ctx.save();ctx.translate(x,y);ctx.scale(tr.dir,1);const bob=(tr.st==="go"||tr.st==="home")?Math.sin(t/60)*.8:0;ctx.translate(0,bob);
+ ctx.fillStyle="#0003";ctx.fillRect(-12,6,24,3);
+ ctx.fillStyle="#f2f2f2";rr(-12,-7,16,13,3);ctx.fill();ctx.fillStyle="#e8862a";ctx.fillRect(-12,-1,16,3);
+ ctx.fillStyle="#1b6fd8";rr(4,-4,8,10,2);ctx.fill();ctx.fillStyle="#bfe7ff";ctx.fillRect(7,-3,4,4);
+ ctx.fillStyle="#222";ctx.beginPath();ctx.arc(-7,7,2.6,0,7);ctx.arc(7,7,2.6,0,7);ctx.fill();
+ ctx.restore();
+ if(tr.st==="svc"){ctx.font="10px sans-serif";ctx.textAlign="center";ctx.fillText("🪠",x,y-12+Math.sin(t/70)*2)}
+ if(tr.st==="dump"){ctx.font="10px sans-serif";ctx.textAlign="center";ctx.fillText("💦",x,y-10)}
+ if(tr.load>0&&tr.st!=="dump"){ctx.fillStyle="#0007";rr(x-8,y-17,16,4,2);ctx.fill();ctx.fillStyle="#8a6d3b";ctx.fillRect(x-8,y-17,16*tr.load/tankSize(),4)}
+}
+
+// ---------- input ----------
+cv.addEventListener("pointerdown",e=>{const r=cv.getBoundingClientRect();const x=(e.clientX-r.left-offX)/scale,y=(e.clientY-r.top-offY)/scale;
+ if(tippedAt&&Math.hypot(x-tippedAt.x,y-tippedAt.y)<26){fixTipped();return}
+ for(const s of S.sites){const d=def(s.id);const bw=s.id==="fair"?176:124,bh=s.id==="fair"?84:66;if(Math.abs(x-d.x)<bw/2&&Math.abs(y-d.y+6)<bh/2+8){tapSite(s,x,y);return}}
+ if(Math.abs(x-YARD.x)<50&&Math.abs(y-YARD.y)<34){switchTab("trucks")}
+});
+function tapSite(s,x,y){const d=def(s.id);
+ if(!s.open){if(spend(d.cost)){s.open=true;s.units=s.units.map(()=>0);sfx.fanfare();toast(`${d.em} ${d.name} unlocked!`);if(s.id==="fair")S.fairReady=0;save();refreshTab(true)}else{sfx.bad();toast(`Need ${money(d.cost)} to unlock ${d.name}`)}return}
+ if(s.id==="fair"&&!fairActive()){if(now()>=S.fairReady){S.fairUntil=now()+FAIR_LEN*1000;S.fairReady=S.fairUntil+FAIR_CD*1000;s.units=s.units.map(()=>Math.random()*.3);sfx.horn();toast("🎡 Fair weekend! 30 units, huge payouts!")}else sfx.bad();return}
+ // rush service: dispatch idle truck + hand-scrub the dirtiest unit
+ const idle=trucks.find(t=>t.st==="idle");let msg=false;
+ if(idle&&!enRoute(s.id)){dispatch(idle,s);sfx.horn();msg=true}
+ const i=dirtiest(s);if(i>=0){const p=unitPos(s,i);serviceUnit(s,i,p.x,p.y,true);sparkle(p.x,p.y)}else if(!msg){sfx.tap();float(x,y,"Sparkling! ✨","#1b6fd8")}
+}
+
+// ---------- UI panel ----------
+let tab="units",cardRefs=[],tabSig="";
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{switchTab(b.dataset.t);sfx.tap()});
+function switchTab(t){tab=t;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));refreshTab(true)}
+function items(){const L=[];
+ if(tab==="units"){
+  L.push({sec:"UNIT TIER (all sites earn more)"});
+  const nt=TIERS[S.tier+1];
+  L.push({ic:TIERS[S.tier].em,t:()=>`${TIERS[S.tier].n} units`,d:()=>nt?`Upgrade to ${nt.n}: x${nt.m} rent & fees (now x${TIERS[S.tier].m})`:"Top of the line. Gold-plated luxury.",cost:()=>nt?nt.c:null,buy:()=>{S.tier++}});
+  L.push({sec:"JOB SITES"});
+  for(const s of S.sites){const d=def(s.id);
+   if(s.open)L.push({ic:d.em,t:()=>d.name+(s.id==="constr"?` (${STAGES[s.stage].n})`:""),d:()=>`${s.units.length} units · ${money(d.rent*mult())}/s each · ${money(d.fee*mult())}/service`+(s.id==="constr"&&STAGES[s.stage+1]?` · grows in ${STAGES[s.stage+1].need-s.done} services`:"")+(s.id==="fair"?" · weekend event":""),cost:()=>null,tag:"OPEN"});
+   else L.push({ic:"🔒",t:()=>d.name,d:()=>`${d.units===4?"4→10":d.units} units · ${money(d.rent*mult())}/s each`,cost:()=>d.cost,buy:()=>{tapSite(s)},noFx:true});}
+ }
+ if(tab==="trucks"){
+  L.push({ic:"🚛",t:()=>`Buy Truck (${S.trucks}/${maxTrucks()})`,d:()=>S.trucks>=maxTrucks()?"Yard is full! Expand yard parking.":"Another truck = more sites serviced",cost:()=>S.trucks>=maxTrucks()?null:C.truck(),buy:()=>{S.trucks++;syncTrucks()},tag:S.trucks>=maxTrucks()?"FULL":null});
+  L.push({ic:"🛢️",t:()=>`Tank Size Lv ${S.tank+1}`,d:()=>`Services ${tankSize()} units per trip → ${tankSize()+2}`,cost:C.tank,buy:()=>S.tank++});
+  L.push({ic:"💨",t:()=>`Truck Speed Lv ${S.speed+1}`,d:()=>`${Math.round(truckSpeed())} mph-ish → ${Math.round(70*(1+(S.speed+1)*.18))}`,cost:C.speed,buy:()=>S.speed++});
+ }
+ if(tab==="crew"){
+  L.push({sec:"DRIVERS auto-dispatch trucks & earn offline"});
+  for(const s of S.sites){const d=def(s.id);if(!s.open)continue;
+   L.push({ic:s.mgr?"🧑‍🔧":"🙋",t:()=>`${d.name} Driver`,d:()=>s.mgr?"On the job. Earns while you're away.":"Auto-services this site + offline earnings",cost:()=>s.mgr?null:C.mgr(s.id),buy:()=>{s.mgr=true},tag:s.mgr?"HIRED":null});}
+  if(S.sites.filter(s=>s.open).length<SITES.length)L.push({ic:"❔",t:()=>"More drivers",d:()=>"Unlock more job sites to hire their drivers",cost:()=>null,tag:"—"});
+ }
+ if(tab==="yard"){
+  L.push({ic:"🅿️",t:()=>`Yard Parking Lv ${S.cap+1}`,d:()=>`Max trucks ${maxTrucks()} → ${maxTrucks()+1}`,cost:C.cap,buy:()=>S.cap++});
+  L.push({ic:"🫧",t:()=>`Wash Bay Lv ${S.wash}`,d:()=>`Crews scrub ${Math.round(S.wash*35)}% faster → ${Math.round((S.wash+1)*35)}%`,cost:C.wash,buy:()=>S.wash++});
+  L.push({ic:"💩",t:()=>`Dump Station Lv ${S.dump}`,d:()=>`Unload in ${dumpTime().toFixed(1)}s → ${(2.5/(1+(S.dump+1)*.4)).toFixed(1)}s`,cost:C.dump,buy:()=>S.dump++});
+ }
+ if(tab==="prestige"){
+  L.push({custom:prestigeHTML});
+ }
+ return L}
+function plungersFor(){return Math.floor(Math.sqrt(S.total/20000))}
+function prestigeHTML(){const fair=site("fair").open;const g=plungersFor();
+ return `<div class="card" style="flex-direction:column;text-align:center;padding:16px"><div style="font-size:44px">🪠✨</div><div class="t" style="font-size:18px">Sell the Company</div>
+ <div class="d" style="font-size:13px;margin:6px 0">Cash out to a big national chain. Start over with <b>Golden Plungers</b>: each one = <b>+10% earnings forever</b>.</div>
+ <div class="d">You own <b>${S.plungers}</b> 🪠 (+${S.plungers*10}%). Lifetime earned: <b>${money(S.total)}</b></div>
+ ${fair?`<button class="big" id="sellbtn" ${g<=S.plungers?"disabled style='opacity:.5'":""}>SELL for ${Math.max(0,g-S.plungers)} 🪠</button>`:`<button class="big alt" disabled>🔒 Unlock the County Fair first</button>`}
+ <div class="d" style="margin-top:8px">Plungers come from lifetime earnings. Earn more, sell for more.</div></div>`}
+function refreshTab(force){const L=items();const sig=tab+"|"+L.map(i=>i.sec||i.t&&i.t()||"c").join(",")+"|"+(tab==="prestige"?plungersFor()+site("fair").open:"");
+ const P=$("#panel");
+ if(force||sig!==tabSig){tabSig=sig;P.innerHTML="";cardRefs=[];
+  for(const it of L){if(it.sec){const e=document.createElement("div");e.className="sec";e.textContent=it.sec;P.appendChild(e);continue}
+   if(it.custom){const e=document.createElement("div");e.innerHTML=it.custom();P.appendChild(e);const sb=$("#sellbtn");if(sb)sb.onclick=sellCompany;continue}
+   const c=document.createElement("div");c.className="card";c.innerHTML=`<div class="ic">${it.ic}</div><div class="tx"><div class="t"></div><div class="d"></div></div><button class="buy"></button>`;
+   const b=c.querySelector("button");b.onclick=()=>{const cost=it.cost();if(cost==null)return;if(it.noFx){it.buy();return}if(spend(cost)){it.buy();sfx.buy();burst(b);save();refreshTab(true)}else sfx.bad()};
+   P.appendChild(c);cardRefs.push({it,c,b});}}
+ for(const r of cardRefs){r.c.querySelector(".t").textContent=r.it.t();r.c.querySelector(".d").textContent=r.it.d();const cost=r.it.cost();
+  if(cost==null){r.b.textContent=r.it.tag||"MAX";r.b.disabled=false;r.b.className="buy max"}else{r.b.textContent=money(cost);r.b.disabled=S.cash<cost;r.b.className="buy"}}
+}
+function burst(el){el.animate([{transform:"scale(1)"},{transform:"scale(1.15)"},{transform:"scale(1)"}],{duration:220})}
+
+// ---------- HUD ----------
+function hud(){$("#cash").textContent=money(S.cash);const t=now();earnLog=earnLog.filter(e=>t-e[0]<5000);const r=earnLog.reduce((a,e)=>a+e[1],0)/5;$("#rate").textContent=money(r)+"/s"+(now()<S.boostUntil?"  ⚡2x":"")+(now()<heatUntil?"  🔥heat":"");
+ const bb=$("#boostbtn");if(t<S.boostUntil){bb.disabled=true;bb.innerHTML=`⚡ 2x ACTIVE: ${fmtTime((S.boostUntil-t)/1000)}`}else if(t<S.boostCD){bb.disabled=true;bb.innerHTML=`📺 Next boost in ${fmtTime((S.boostCD-t)/1000)}`}else{bb.disabled=false;bb.innerHTML=`📺 Watch ad: 2x cash 60s <small>(Demo boost)</small>`}
+ $("#plg").textContent=S.plungers?`🪠 ${S.plungers} (+${S.plungers*10}%)`:"";$("#sndbtn").textContent=S.sound?"🔊":"🔇"}
+$("#boostbtn").onclick=()=>{if(now()<S.boostCD)return;modal(`<div style="font-size:40px">📺</div><h2>"Totally Real Ad"</h2><p>🚽 Royal Flush: we're #2 at #2!</p><div class="tbar"><i id="adbar" style="width:0%;transition:width 3s linear"></i></div><p style="font-size:12px">Demo boost — no real ad plays.</p>`);setTimeout(()=>{const b=$("#adbar");if(b)b.style.width="100%"},30);setTimeout(()=>{closeModal();S.boostUntil=now()+60000;S.boostCD=now()+150000;sfx.fanfare();toast("⚡ 2x cash for 60 seconds!")},3100)};
+$("#sndbtn").onclick=()=>{S.sound=!S.sound;sfx.tap();save()};
+$("#setbtn").onclick=()=>{modal(`<h2>⚙️ Settings</h2><button class="big alt" id="s1">${S.sound?"🔊 Sound: ON":"🔇 Sound: OFF"}</button><button class="big red" id="s2">🗑️ Reset Game</button><button class="big" id="s3">Close</button><p style="font-size:11px;margin-top:10px">Potty Tycoon demo v0.1 · progress autosaves</p>`);
+ $("#s1").onclick=()=>{S.sound=!S.sound;$("#s1").textContent=S.sound?"🔊 Sound: ON":"🔇 Sound: OFF"};
+ $("#s2").onclick=()=>{modal(`<h2>Reset everything?</h2><p>All cash, sites, upgrades and plungers will be flushed. 🚽</p><button class="big red" id="r1">Yes, flush it</button><button class="big alt" id="r2">Cancel</button>`);$("#r1").onclick=()=>{localStorage.removeItem("pottyTycoon_v1");S=fresh();trucks=[];syncTrucks();save();closeModal();refreshTab(true);toast("Fresh start! 🧻")};$("#r2").onclick=closeModal};
+ $("#s3").onclick=closeModal};
+
+// ---------- modal/toast ----------
+let modalOpen=false;
+function modal(h){$("#mbox").innerHTML=h;$("#modal").style.display="flex";modalOpen=true}
+function closeModal(){$("#modal").style.display="none";modalOpen=false}
+let toastT;function toast(m){const t=$("#toast");t.textContent=m;t.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>t.style.opacity=0,2400)}
+
+// ---------- events ----------
+let tippedAt=null;
+function randomEvent(){const open=S.sites.filter(s=>siteActive(s));const opts=["rush","heat","tip"];if(S.total>500)opts.push("rival");const e=opts[Math.floor(Math.random()*opts.length)];
+ if(e==="rush")tapGame("🎪 Festival Line Rush!","The line is 40 people deep and Uncle Gary can't hold it. Tap to wave folks through!","👋 NEXT!",22,6,()=>{const b=Math.max(50,ratePerSec()*25);earn(b);return`Crowd handled! Tips: ${money(b)}`},()=>"Somebody did NOT make it. No tips today. 😬");
+ if(e==="heat"){heatUntil=now()+30000;sfx.bad();modal(`<div style="font-size:48px">🥵🔥</div><h2>Heat Wave!</h2><p>It's 104°F. Stink fills <b>2x faster</b> for 30 seconds. Keep those trucks rolling!</p><button class="big" id="ok">Crank the A/C</button>`);$("#ok").onclick=closeModal}
+ if(e==="tip"){const s=open[Math.floor(Math.random()*open.length)];if(!s)return;const d=def(s.id);tippedAt={x:d.x+(Math.random()<.5?-1:1)*40,y:d.y+30,until:now()+12000,s:s.id};sfx.bad();toast(`💨 A goat tipped a unit at ${d.name}! Tap it to clean up!`);showBanner(`🐐 Tipped unit at ${d.name}! Tap the 🚽 on the map for a cleanup bonus.`)}
+ if(e==="rival"){const s=S.sites.filter(s=>s.open)[Math.floor(Math.random()*S.sites.filter(s=>s.open).length)];const d=def(s.id);const price=Math.max(100,Math.floor(ratePerSec()*20));
+  modal(`<div style="font-size:44px">👑🚽</div><h2>Royal Flush is here!</h2><p>Your rival <b>Royal Flush Sanitation</b> is trying to steal your <b>${d.name}</b> contract!</p><button class="big" id="pay">💵 Outbid them (${money(price)})</button><button class="big alt" id="duel">🪠 Plunger Duel!</button>`);
+  $("#pay").onclick=()=>{if(spend(price)){closeModal();sfx.buy();toast("Contract kept. Royal Flush goes home grumpy. 👑💨")}else{sfx.bad();toast("Not enough cash, time to duel!")}};
+  $("#duel").onclick=()=>tapGame("🪠 Plunger Duel!","Out-plunge Royal Flush's guy to keep the contract!","🪠 PLUNGE!",18,5,()=>{const b=price*.5;earn(b);return`You won! The client tipped you ${money(b)}.`},()=>{const lost=Math.floor(S.cash*.1);S.cash-=lost;s.units=s.units.map(()=>1);return`Royal Flush made a mess at ${d.name} before leaving. Lost ${money(lost)} and every unit is full! 😡`})}
+}
+function ratePerSec(){let r=0;for(const s of S.sites)if(siteActive(s))r+=def(s.id).rent*s.units.length*mult();return r}
+function tapGame(title,desc,btn,need,secs,win,lose){let n=0,end=now()+secs*1000,done=false;
+ modal(`<h2>${title}</h2><p>${desc}</p><div class="mini" id="tg">0/${need}</div><div class="tbar"><i id="tb"></i></div><button class="big" id="tgb" style="font-size:24px;padding:22px">${btn}</button>`);
+ $("#tgb").onpointerdown=e=>{e.preventDefault();if(done)return;n++;sfx.tap();$("#tg").textContent=`${n}/${need}`;$("#tgb").animate([{transform:"scale(.94)"},{transform:"scale(1)"}],{duration:90});if(n>=need)finish(true)};
+ const iv=setInterval(()=>{if(done){clearInterval(iv);return}const left=(end-now())/1000;const b=$("#tb");if(b)b.style.width=Math.max(0,left/secs*100)+"%";if(left<=0)finish(false)},50);
+ function finish(ok){done=true;clearInterval(iv);const m=ok?win():lose();ok?sfx.fanfare():sfx.bad();modal(`<div style="font-size:48px">${ok?"🏆":"💩"}</div><h2>${ok?"Nice!":"Oof."}</h2><p>${m}</p><button class="big" id="ok">Back to work</button>`);$("#ok").onclick=closeModal}}
+function showBanner(h){const b=$("#banner");b.innerHTML=h;b.style.display="flex";setTimeout(()=>b.style.display="none",8000)}
+function fixTipped(){const b=Math.max(40,ratePerSec()*12);earn(b,tippedAt.x,tippedAt.y-10);sparkle(tippedAt.x,tippedAt.y);sfx.fanfare();tippedAt=null;$("#banner").style.display="none";toast("Upright and sparkling! Cleanup bonus 🧽")}
+function drawTipped(t){if(!tippedAt)return;if(now()>tippedAt.until){tippedAt=null;return}ctx.save();ctx.translate(offX,offY);ctx.scale(scale,scale);ctx.translate(tippedAt.x,tippedAt.y);ctx.rotate(Math.PI/2.2);ctx.fillStyle="#2f7be0";rr(-8,-12,16,22,3);ctx.fill();ctx.restore();ctx.save();ctx.translate(offX,offY);ctx.scale(scale,scale);ctx.strokeStyle="#ff3";ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(tippedAt.x,tippedAt.y,16+Math.sin(t/120)*3,0,7);ctx.stroke();ctx.font="12px sans-serif";ctx.textAlign="center";ctx.fillText("👆",tippedAt.x+14,tippedAt.y+22);ctx.restore()}
+
+// ---------- prestige ----------
+function sellCompany(){const g=plungersFor()-S.plungers;if(g<=0||!site("fair").open)return;
+ modal(`<div style="font-size:48px">🤝💰</div><h2>Sell for ${g} Golden Plungers?</h2><p>You'll restart with a small yard, but every dollar earns <b>+${(S.plungers+g)*10}%</b> forever.</p><button class="big" id="y">Sell it!</button><button class="big alt" id="n">Not yet</button>`);
+ $("#y").onclick=()=>{const keep={plungers:S.plungers+g,sound:S.sound,total:S.total,sold:S.sold+1};S=Object.assign(fresh(),keep);trucks=[];syncTrucks();save();closeModal();sfx.fanfare();refreshTab(true);toast(`🪠 Company sold! +${g} Golden Plungers`)};$("#n").onclick=closeModal}
+
+// ---------- offline ----------
+function offline(){const away=Math.min(8*3600,(now()-S.last)/1000);if(away<30)return;let r=0;for(const s of S.sites){if(!s.mgr||!s.open||s.id==="fair")continue;const d=def(s.id);r+=d.rent*s.units.length+d.fee/d.fill*s.units.length*.5}
+ r*=TIERS[S.tier].m*(1+S.plungers*.1)*0.5;const got=r*away;
+ for(const s of S.sites)if(s.open&&s.id!=="fair")s.units=s.units.map(u=>s.mgr?Math.random()*.4:1);
+ if(got<1){if(away>60)setTimeout(()=>toast("Units filled up while you were gone. Hire drivers to earn offline!"),800);return}
+ S.cash+=got;S.total+=got;modal(`<div style="font-size:48px">🌙🚛</div><h2>Welcome back!</h2><p>While you were away (${fmtTime(away)}) your crew earned</p><div class="mini" style="color:#1f9a40">${money(got)}</div><button class="big" id="ok">Collect</button>`);$("#ok").onclick=()=>{closeModal();sfx.coin()}}
+
+// ---------- loop ----------
+function loop(t){const dt=Math.min(.25,(t-last)/1000);last=t;if(S.started)update(dt);draw(t);drawTipped(t);uiT+=dt;saveT+=dt;if(uiT>.2){uiT=0;hud();refreshTab()}if(saveT>5){saveT=0;save()}requestAnimationFrame(loop)}
+window.__pt={get S(){return S},update,trucks:()=>trucks,refreshTab,randomEvent,save,offline};
+// ---------- boot ----------
+const had=load();syncTrucks();resize();window.addEventListener("resize",resize);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)save();else{offline();last=performance.now()}});
+$("#playbtn").onclick=()=>{$("#title").style.display="none";S.started=true;sfx.fanfare();if(had)offline();else{modal(`<div style="font-size:48px">🚽🚛</div><h2>Welcome, boss!</h2><p>You've got <b>1 truck</b> and <b>2 porta-potties</b> at a backyard party.</p><p>Units earn rent while they're clean. When the stink meter fills, customers get 😡.</p><p><b>Tap a job site</b> to scrub a unit and send your truck. Buy upgrades below!</p><button class="big" id="ok">Let's roll!</button>`);$("#ok").onclick=closeModal}save()};
+if(had)$("#playbtn").textContent="▶ CONTINUE";
+refreshTab(true);hud();requestAnimationFrame(loop);
+</script></body></html>
